@@ -33,3 +33,5 @@
 
 # Vscode settings
 .vscode
+
+.DS_Store
