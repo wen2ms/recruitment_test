@@ -13,8 +13,17 @@
 // 输入：234-+21
 // 输出：3
 
-int prase_number(const std::string& s, int start) {
-    if (start >= s.size() || !isdigit(s[start])) {
+int parse_number(const std::string& s, int start, bool allow_negative, bool& ended_with_single_zero) {
+    if (start >= s.size()) {
+        return -1;
+    }
+
+    if (allow_negative && s[start] == '-') {
+        start++;
+        if (start >= s.size() || !isdigit(s[start])) {
+            return -1;
+        }
+    } else if (!isdigit(s[start])) {
         return -1;
     }
 
@@ -24,7 +33,8 @@ int prase_number(const std::string& s, int start) {
     }
 
     if (end - start > 1 && s[start] == '0') {
-        return -1;
+        ended_with_single_zero = true;
+        return start + 1;
     }
 
     return end;
@@ -37,16 +47,21 @@ int main() {
 
     int i = 0;
     int last_valid = 0;
+    bool ended_with_single_zero = false;
 
-    int next = prase_number(s, i);
+    int next = parse_number(s, i, true, ended_with_single_zero);
     if (next == -1) {
         std::cout << 0 << std::endl;
         return 0;
     }
 
     last_valid = next;
-    i = next;
+    if (ended_with_single_zero) {
+        std::cout << last_valid << std::endl;
+        return 0;
+    }
 
+    i = next;
     while (i < s.size()) {
         if (s[i] != '+' && s[i] != '-') {
             break;
@@ -54,12 +69,17 @@ int main() {
 
         i++;
 
-        next = prase_number(s, i);
+        ended_with_single_zero = false;
+        next = parse_number(s, i, false, ended_with_single_zero);
         if (next == -1) {
             break;
         }
 
         last_valid = next;
+        if (ended_with_single_zero) {
+            break;
+        }
+
         i = next;
     }
 
