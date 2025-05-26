@@ -46,7 +46,7 @@ class Solution {
         }
 
         if (!tail) {
-            return nullptr;
+            return head->next;
         }
 
         while (tail->next) {
