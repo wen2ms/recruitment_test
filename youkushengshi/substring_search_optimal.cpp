@@ -17,11 +17,11 @@ int main() {
     for (int i = 1; i < m; ++i) {
         int j = pi[i - 1];
 
-        while (j > 0 && str[i] != str[j]) {
+        while (j > 0 && sub_string[i] != sub_string[j]) {
             j = pi[j - 1];
         }
 
-        if (str[i] == str[j]) {
+        if (sub_string[i] == sub_string[j]) {
             ++j;
         }
 
