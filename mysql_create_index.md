@@ -8,7 +8,7 @@ CREATE TABLE users (
     name VARCHAR(100),
     email VARCHAR(100),
     INDEX idx_name (name),
-    UNIQUE KEY idx_email (email)
+    UNIQUE idx_email (email)
 );
 ```
 
