@@ -133,4 +133,3 @@ class Child {
     short height_;
 };
 ```
-
