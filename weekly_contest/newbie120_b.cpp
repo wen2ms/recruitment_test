@@ -11,7 +11,7 @@ int main() {
             std::cout << -1 << '\n';
             continue;
         }
-        if ((num & 1) == 1) {
+        if (num % 2 == 1) {
             std::cout << 1 << '\n';
         } else {
             std::cout << 2 << '\n';

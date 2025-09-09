@@ -7,7 +7,7 @@ int main() {
         --total_cases;
         int len;
         std::cin >> len;
-        if ((len & 1) == 1) {
+        if (len % 2 == 1) {
             for (int i = 1; i < len; ++i) {
                 std::cout << i << ' ';
             }
