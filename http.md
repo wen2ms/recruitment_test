@@ -45,6 +45,8 @@ GET / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n
 
 `301 Moved Permanently`表示永久重定向，例如访问`curl -v google.com`就会出现。
 
+`403 Forbidden`表示禁止访问，是指客户端请求合法，但是服务器拒绝。
+
 `405 Method Not Allowed`表示客户端的请求方式不对，例如`curl -XPost -v google.com`。
 
 `404 Not Found`表示客户端请求的资源不存在，例如`curl -v google.com/1`。
