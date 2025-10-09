@@ -18,7 +18,7 @@ C++是`OOP`语言，对于设计模式的实现更加简洁。
 
 第二种是直接通过`std::call_once`来保证只有一个线程执行`new`。
 
-最后一种懒汉模式的实现就是`get_instance `直接返回静态局部变量的指针，也是线程安全的。
+最后一种懒汉模式的实现就是`get_instance`直接返回静态局部变量的指针，也是线程安全的。
 
 对于类中静态变量指向的堆内存，不释放会导致内存泄漏，最简单的方法就是在懒汉模式下直接返回静态局部变量的指针，或者就是通过`std::unqiue_ptr`和`std::call_once`实现。但一般来说，单例对象的生命周期和程序生命周期一致，所以最后手动`delete`即可。
 
@@ -36,7 +36,7 @@ C更接近底层，内存管理主要通过`malloc, calloc, realloc`和`free`。
 
 ### 3.1.1 智能指针
 
-智能指针通过引用计数进行堆内存的管理，当智能指针离开它的作用域后就会将管理的内存的引用计数减1，当引用计数为0时，就自动调用删除器释放这个内存，`std::unique_ptr`它只是用来监控`std::shared_ptr`，不增加引用计数，当需要使用它监控的`std::shared_ptr`，需要使用`lock`方法。
+智能指针通过引用计数进行堆内存的管理，当智能指针离开它的作用域后就会将管理的内存的引用计数减1，当引用计数为0时，就自动调用删除器释放这个内存，`std::weak_ptr`它只是用来监控`std::shared_ptr`，不增加引用计数，当需要使用它监控的`std::shared_ptr`，需要使用`lock`方法。
 
 需要注意：
 
@@ -44,7 +44,7 @@ C更接近底层，内存管理主要通过`malloc, calloc, realloc`和`free`。
 2. 用一个原始地址初始化多个智能指针。
 3. 用一个指向单个指针的智能指针管理了一个数组，`std::shared_ptr<int> arr(new int[10]);`，正确做法是`std::shared_ptr<int[]> arr(new int[10]);`
 4. 函数返回指向`this`的智能指针。正确做法是类要继承`enbale_shared_from_this<T>`类，函数返回时返回`shared_from_this()`。这个父类有一个`std::weak_ptr`来监测指向子类对象的`std::shared_ptr`，此时再赋值就会让智能指针的引用计数加1。
-5. `std::shared_ptr`中的循环引用是线程安全的，例如这样的值拷贝。
+5. `std::shared_ptr`中的引用计数机制是线程安全的，例如这样的值拷贝。
 
     ```cpp
     std::shared_ptr<int> ptr = std::make_shared<int>(42);
@@ -89,9 +89,10 @@ int main() {
 }
 ```
 
-2. 右值引用在传递时，由于已经具名化了，所以被对待成一个左值。例如：不允许将一个左值赋值给右值引用`int&& foo = 1; int&& bar = foo;`。
-3. 在利用右值引用和`template`进行类型推导时，只有右值才能推导出右值引用，也就是`T&& foo = 3;`。其他情况都推导出的是左值引用`T&& foo = num;`。同时要注意`const T&&`本身就是一个右值引用，不需要进行类型推导。
-4. 配合`std::forward`的时候要注意，它只会将左值引用转化为左值，其余情况都是转化为右值。
+2. 在需要某些类型和其他模版类型不一样的行为时，就可以进行全特化实现。当需要某种类组合的行为和其他组合不一样时就可以使用偏特化。
+3. 右值引用在传递时，由于已经具名化了，所以被对待成一个左值。例如：不允许将一个左值赋值给右值引用`int&& foo = 1; int&& bar = foo;`。
+4. 在利用右值引用和`template`进行类型推导时，只有右值才能推导出右值引用，也就是`T&& foo = 3;`。其他情况都推导出的是左值引用`T&& foo = num;`。同时要注意`const T&&`本身就是一个右值引用，不需要进行类型推导。
+5. 配合`std::forward`的时候要注意，它只会将左值引用转化为左值，其余情况都是转化为右值。
 
 #### 3.2.1.2 auto
 
@@ -142,6 +143,8 @@ auto* foo = num;
   
  - 虚函数不能带默认参数。默认参数是在编译期绑定的，而虚函数是在运行时确定要调用哪一个函数，因此会出现实际调用的虚函数的参数和默认参数不一致的情况。
 
+ - 如果一个抽象类中只有纯虚函数，那么这个抽象类也被称为接口，这是和其他语言中定义关键字不一样的。
+
 ### 3.3.3 RTTI
 
 `RTTI (Run-Time Type Information)`运行时类型信息。例如
@@ -168,37 +171,44 @@ Derived* derived = std::dynamic_cast<Derived*>(base);
 
 2. 策略模式实现函数的动态选择。
 
-    ```cpp
-    int add(int op1, int op2) { return op1 + op2 };
-    int sub(int op1, int op2) { return op1 - op2 };
-    // int (*ops[])(int, int) = { op1, op2 };
-    int (*select_operation(char operation))(int, int) {
-        if (operation == '+') {
-            return add;
-        } else if (operation == '-') {
-            return sub;
-        }
-    }
-    ```
+  ```cpp
+  int add(int op1, int op2) { return op1 + op2 };
+  int sub(int op1, int op2) { return op1 - op2 };
+  // int (*ops[])(int, int) = { op1, op2 };
+  int (*select_operation(char operation))(int, int) {
+      if (operation == '+') {
+          return add;
+      } else if (operation == '-') {
+          return sub;
+      }
+  }
+  ```
 
 3. 通过结构体中定义的函数指针成员就可以实现多态。
 
-    ```cpp
-    struct Dispatcher {
-        void* (*init)();
-        int (*add)(struct Channel*, struct EventLoop*);
-    };
-    
-    struct Dispatcher epoll_dispatcher = {epoll_init, epoll_add};
-    ```
-    
+  ```cpp
+  struct Dispatcher {
+      void* (*init)();
+      int (*add)(struct Channel*, struct EventLoop*);
+  };
+
+  struct Dispatcher epoll_dispatcher = {epoll_init, epoll_add};
+  ```
+
 4. 可调用对象有四种：函数指针，仿函数，可以转化为函数指针的对象，类成员指针，而使用可调用对象绑定器`std::function`可以一次性包装这四种对象。对于类成员的非静态成员函数，可以通过`std::bind`绑定，它也可以被`std::function`包装。
-
-
 
 # 4 标准库
 
-C的数据结构往往要自己实现，例如链表，队列，哈希表等。C++的STL中包含了这些数据类型，同时通过`RAII`自动内存管理。
+C的数据结构往往要自己实现，例如链表，队列，哈希表等。例如通过存储`fd`的数组来实现哈希:
+
+```cpp
+struct ChannelMap {
+    int size;
+    struct Channel** list;
+};
+```
+
+C++的STL中包含了这些数据类型，同时通过`RAII`自动内存管理。
 
 C通过`POSIX`线程库`libpthread.so`来实现多线程，而C++11提供了`std::thread, std::mutex`等的封装。
 

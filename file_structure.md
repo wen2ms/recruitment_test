@@ -12,19 +12,19 @@
 
 块的的存储结构根据文件系统不同而不同，`ext4`中采用直接块+间接块，一个`inode`中包括几个直接块指针和一个或者多个间接块指针，间接块指针指向一个块，这个块中又有指向其他块的直接块指针。而对于`FAT32`中的文件分配表保存着每一簇和它对应的下一簇的地址，文件的元数据和起始簇地址是存放在目录项中的，这与`ext4`不一样。
 
-块指针实际上是一个逻辑块号`LBN (Logic Block Address)`，文件系统只能看到`LBA`，由硬件驱动根据`LBA`控制磁盘控制器，然后磁盘控制器执行磁头读取数据的操作。因此块就是文件系统管理磁盘空间的最小单位，磁盘上的数据是以块来读写分配的。为了方便进行`mmap`映射，块大小和页大小一般相等为`4KB`，但也有`512B`。
+块指针实际上是一个逻辑块号`LBN (Logic Block Number)`，文件系统只能看到`LBA (Logic Block Address)`，由硬件驱动根据`LBA`控制磁盘控制器，然后磁盘控制器执行磁头读取数据的操作。因此块就是文件系统管理磁盘空间的最小单位，磁盘上的数据是以块来读写分配的。为了方便进行`mmap`映射，块大小和页大小一般相等为`4KB`，但也有`512B`。
 
 #### 2.2 块读取
 
-一个程序调用`read(fd, buf, size)`读取一个文件描述符`fd (file description)`中的数据，CPU首先从用户态陷入内核态，执行`read`系统调用，文件系统根据进程的`fdtable`找到文件的`inode`，就是先从目录中找到`hello.txt`的`inode`，`inode`中保存了数据块指针，指针指向磁盘上的数据块地址，然后由驱动到磁盘控制器读取到磁盘上的块数据，然后重新向后一步步封装，最后由内核将数据拷贝到用户空间缓冲区，由`read`返回。
+一个程序调用`read(fd, buf, size)`读取一个文件描述符`fd (file description)`中的数据，CPU首先从用户态陷入内核态，执行`read`系统调用，文件系统根据进程的`fdtable`找到文件的`inode`，`inode`中保存了数据块指针，指针指向磁盘上的数据块地址，然后由驱动到磁盘控制器读取到磁盘上的块数据，然后重新向后一步步封装，最后由内核将数据拷贝到用户空间缓冲区，由`read`返回。
 
 ### 3. 文件描述符
 
-`fd`实际上是`I/O`对象对应的一个整数，就是操作系统中文件的句柄，包括文件，`socket`，设备，标准输入输出，管道等。例如程序调用`int fd = open("/home/docs/file.txt", O_RDONLY);`内核会先从`/`目录项中找到`/home`的`inode`，然后从`/home`目录项中找到`/home/docs`的`inode`，最终再读取`file.txt`的`inode`，然后将这个`inode`缓存到内存中，系统文件表中会新建一个`struct file`结构体。
+`fd`实际上是`I/O`对象对应的一个整数，就是操作系统中文件的句柄，包括文件，`socket`，设备，标准输入输出，管道等。例如程序调用`int fd = open("/home/docs/file.txt", O_RDONLY);`内核会先从`/`目录项中找到`/home`的`inode`，然后从`/home`目录项中找到`/home/docs`的`inode`，最终再读取`file.txt`的`inode`，然后将这个`inode`缓存到内存中，系统文件表`fdtable`中会新建一个`struct file`结构体。
 
 `file`结构体包含了当前文件的读写偏移`offset`，文件的访问权限，以及指向`inode`的指针，而进程的`fdtable`中的`fd`对应的项就是这个`file`结构体。例如`lseek(fd, 0, SEEK_SET);`就是读写`fd`对应的`file.f_pos`的文件偏移量。
 
-`lfd_ = socket(AF_INET, SOCK_STREAM, 0)`可以得到一个`fd`。`0, 1, 2`分别对应`stdin, stdout, stderr`。`inode`的数量是有限的即使还有磁盘空间如果`inode`用尽，也无法创建新文件了，例如文件系统根据每`16KB`的数据块分配一个`inode`，同时有进程正在通过`fd`打开文件，那即使这个通过文件名删除文件也只是删除了它在目录中的目录项，`inode`还是在，磁盘空间也没有被释放。
+`lfd_ = socket(AF_INET, SOCK_STREAM, 0)`可以得到一个`fd`。`0, 1, 2`分别对应`stdin, stdout, stderr`。`inode`的数量是有限的即使还有磁盘空间如果`inode`用尽，也无法创建新文件了，例如文件系统根据每`16KB`的数据块分配一个`inode`，同时有进程正在通过`fd`打开文件，那即使通过文件名删除了文件也只是删除了它在目录中的目录项，`inode`还是在，磁盘空间也没有被释放。
 
 ### 4. 链接
 
@@ -56,7 +56,7 @@ int count = select(kMaxSize, &rdtmp, &wrtmp, NULL, &val);
 
 而`poll`采用了`struct pollfd*`来进行管理，可监听的`fd`更多，但每次调用`poll`也需要进行从用户空间到内核空间的拷贝。
 
-`epoll`只是在`epoll_ctl`时在内核空间注册一次，之后调用`epoll_wait`都不需要拷贝，而是通过回调机制返回有事件触发的`fd`，同时`epoll`是有水平触发`LT (Level-Triggered)`和边沿触发模式`ET (Edge-Triggered)`。`ET`模式下，内核只会在`fd`在事件触发的一瞬间发送一次通知，例如`EPOLLIN, EPOLLOUT`，即使程序还没有处理完数据，也不会再发送通知了。因此必须不停的进行`read/write`，直到返回`errno == EAGAIN`表示数据处理完了，但是此时程序还是会继续在循环中调用`read/write`，导致程序卡住，甚至接收不到一下次通知，因此`ET`模式下的`fd`必须是非阻塞模式：
+`epoll`只是在`epoll_ctl`时在内核空间注册一次，之后调用`epoll_wait`都不需要拷贝，而是通过回调机制返回有事件触发的`fd`，同时`epoll`是有水平触发`LT (Level-Triggered)`和边沿触发模式`ET (Edge-Triggered)`。`ET`模式下，内核只会在`fd`在事件触发的一瞬间发送一次通知，例如`EPOLLIN, EPOLLOUT`，即使程序还没有处理完数据，也不会再发送通知了。因此程序必须循环的进行`read/write`，直到返回`errno == EAGAIN`表示数据处理完了，但是此时程序还是会继续在循环中调用`read/write`，导致程序卡住，甚至接收不到一下次通知，因此`ET`模式下的`fd`必须是非阻塞模式：
 
 ```cpp
 int flag = fcntl(cfd, F_GETFL);
