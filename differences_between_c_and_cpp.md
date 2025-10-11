@@ -41,9 +41,13 @@ C更接近底层，内存管理主要通过`malloc, calloc, realloc`和`free`。
 需要注意：
 
 1. 循环引用。常见的就是两个类对象都保存的各自`std::shared_ptr`，然后又互相指向对方，导致引用计数永远不为0。解决方法就是在一个类中使用`std::weak_ptr`来监控另一个类对象。
+
 2. 用一个原始地址初始化多个智能指针。
+
 3. 用一个指向单个指针的智能指针管理了一个数组，`std::shared_ptr<int> arr(new int[10]);`，正确做法是`std::shared_ptr<int[]> arr(new int[10]);`
+
 4. 函数返回指向`this`的智能指针。正确做法是类要继承`enbale_shared_from_this<T>`类，函数返回时返回`shared_from_this()`。这个父类有一个`std::weak_ptr`来监测指向子类对象的`std::shared_ptr`，此时再赋值就会让智能指针的引用计数加1。
+
 5. `std::shared_ptr`中的引用计数机制是线程安全的，例如这样的值拷贝。
 
     ```cpp
@@ -51,16 +55,25 @@ C更接近底层，内存管理主要通过`malloc, calloc, realloc`和`free`。
     std::thread thread1([ptr](){});
     std::thread thread2([ptr](){});
     ```
-    
+
     但是`std::shared_ptr`本身和管理的对象不是线程安全的，例如下面这种情况就不是线程安全的。
-    
+
     ```cpp
     std::shared_ptr<int> ptr = std::make_shared<int>(42);
     std::thread thread1([&ptr](){ ptr = std::make_shared<int>(3) });
     std::thread thread2([&ptr](){ ptr = std::make_shared<int>(4) });
     ```
-    
+
     而`std::unique_ptr`是不能跨线程的，只能有一个线程拥有，必须通过移动语义来转移，因此它是线程安全的。
+
+6. `std::unique_ptr` `delete`了拷贝构造函数，因此在向容器中插入的时候不能直接插入。
+
+    ```cpp
+    std::vector<std::unique_ptr<int>> vec;
+    std::unique_ptr<int> ptr(new int(4));
+    vec.push_back(std::move(ptr));
+    vec.push_back(std::make_unique<int>(5));
+    vec.emplace_back(new int(4));
 
 ## 3.2 **多态**
 
