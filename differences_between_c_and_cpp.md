@@ -158,6 +158,34 @@ auto* foo = num;
 
  - 如果一个抽象类中只有纯虚函数，那么这个抽象类也被称为接口，这是和其他语言中定义关键字不一样的。
 
+与虚函数相似的还有虚继承，虚继承是为了解决棱形继承的问题，它通过维护一个`vbtable (Virtual Base Table)`虚基类表，使得最派生类中只有一个虚基类实例，继承的中间类实例会有一个`vbptr`虚基类表指针，以此来使多个中间继承的类实例最终指向同一个虚基类实例，只有最派生类会调用虚基类的构造函数。例如：
+
+```cpp
+class Animal {
+  public:
+    explicit Animal(int num) {
+        std::cout << "num = " << num << '\n';
+    }
+
+    static int age_;
+};
+
+class Sheep : virtual public Animal {
+  public:
+    Sheep() : Animal(1) {}
+};
+
+class Camel : virtual public Animal {
+  public:
+    Camel() : Animal(2) {}
+};
+
+class Llama : public Sheep, public Camel {
+  public:
+    Llama() : Sheep(), Camel(), Animal(3) {}
+};
+```
+
 ### 3.3.3 RTTI
 
 `RTTI (Run-Time Type Information)`运行时类型信息。例如
