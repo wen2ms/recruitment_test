@@ -18,6 +18,9 @@
 
 一个程序调用`read(fd, buf, size)`读取一个文件描述符`fd (file description)`中的数据，CPU首先从用户态陷入内核态，执行`read`系统调用，文件系统根据进程的`fdtable`找到文件的`inode`，`inode`中保存了数据块指针，指针指向磁盘上的数据块地址，然后由驱动到磁盘控制器读取到磁盘上的块数据，然后重新向后一步步封装，最后由内核将数据拷贝到用户空间缓冲区，由`read`返回。
 
+#### 2.3 块设备与字符设备
+块设备是以数据块为单位访问的外设，比如硬盘，它可以随机访问。字符设备是以字节流为单位访问的外设，比如键盘，声卡等，它不能随机访问，只能顺序访问。
+
 ### 3. 文件描述符
 
 `fd`实际上是`I/O`对象对应的一个整数，就是操作系统中文件的句柄，包括文件，`socket`，设备，标准输入输出，管道等。例如程序调用`int fd = open("/home/docs/file.txt", O_RDONLY);`内核会先从`/`目录项中找到`/home`的`inode`，然后从`/home`目录项中找到`/home/docs`的`inode`，最终再读取`file.txt`的`inode`，然后将这个`inode`缓存到内存中，系统文件表`fdtable`中会新建一个`struct file`结构体。
@@ -42,9 +45,7 @@
 
 ```cpp
 int count = epoll_wait(epfd_, events_, kMaxNode, timeout * 1000);
-
 int count = poll(fds_, maxfd_ + 1, timeout * 1000);
-
 int count = select(kMaxSize, &rdtmp, &wrtmp, NULL, &val); 
 ```
 

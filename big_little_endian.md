@@ -20,7 +20,6 @@
 ```cpp
     uint32_t number = 0x12345678;
     uint8_t* ptr = reinterpret_cast<uint8_t*>(&number);
-
     for (int i = 0; i < sizeof(uint32_t); ++i) {
         std::cout << std::hex << static_cast<uint32_t>(ptr[i]) << ' ';
     }
@@ -92,7 +91,7 @@ class Child {
 
 这个类的对象的大小是8个字节。![memory_alignment](assets/memory_alignment.png)
 
-需要注意对于由虚函数的类，每个对象中有一个指向这个类的虚函数表`vtable`的虚表指针`vptr`，而增加一个虚函数只会向`vtable`新加入一个函数指针，但`vptr`的大小不变，因此类对象的内存大小也不变。
+需要注意对于有虚函数的类，每个对象中有一个指向这个类的虚函数表`vtable`的虚表指针`vptr`，而增加一个虚函数只会向`vtable`新加入一个函数指针，但`vptr`的大小不变，因此类对象的内存大小也不变。
 
 `union`的大小必须满足它的最大成员的对齐要求。
 
