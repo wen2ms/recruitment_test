@@ -23,7 +23,7 @@
 
 ### 3. 文件描述符
 
-`fd`实际上是`I/O`对象对应的一个整数，就是操作系统中文件的句柄，包括文件，`socket`，设备，标准输入输出，管道等。例如程序调用`int fd = open("/home/docs/file.txt", O_RDONLY);`内核会先从`/`目录项中找到`/home`的`inode`，然后从`/home`目录项中找到`/home/docs`的`inode`，最终再读取`file.txt`的`inode`，然后将这个`inode`缓存到内存中，系统文件表`fdtable`中会新建一个`struct file`结构体。
+`fd`实际上是`I/O`对象对应的一个整数，就是操作系统中文件的句柄，包括文件，`socket`，设备，标准输入输出，管道等。例如程序调用`int fd = open("/home/docs/file.txt", O_RDONLY);`内核会先从`/`目录项中找到`/home`的`inode`，然后从`/home`目录项中找到`/home/docs`的`inode`，最终再读取`file.txt`的`inode`，然后将这个`inode`缓存到内存中，进程的`fdtable`中会新建一个`struct file`结构体。
 
 `file`结构体包含了当前文件的读写偏移`offset`，文件的访问权限，以及指向`inode`的指针，而进程的`fdtable`中的`fd`对应的项就是这个`file`结构体。例如`lseek(fd, 0, SEEK_SET);`就是读写`fd`对应的`file.f_pos`的文件偏移量。
 
