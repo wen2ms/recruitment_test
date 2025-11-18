@@ -36,7 +36,7 @@
 
 ### 3. 通信
 
-线程间的通信是通过临界变量实现的，因为多个线程有共享的内存空间，如堆，全局变量和静态变量，但需要通过线程同步来保证线程安全，例如互斥锁`pthread_mutex_t, std::mutex`，读写锁`pthread_rwlock_t, std::shared_mutex`，原子变量`std::atomic`保证基本数据类型的线程安全，条件变量`pthread_cond_t, std::condition_variable`。同时它也可以通过`socketpair`创建一对文件描述符`fd`用来读写数据进行线程间的通信。
+线程间的通信是通过临界变量实现的，因为多个线程有共享的内存空间，如堆，全局变量和静态变量，但需要通过线程同步来保证线程安全，例如互斥锁`pthread_mutex_t, std::mutex`，读写锁`pthread_rwlock_t, std::shared_mutex`，原子变量`std::atomic`保证基本数据类型的线程安全，条件变量`pthread_cond_t, std::condition_variable`。同时也可以通过`socketpair`创建一对文件描述符`fd`用来读写数据进行线程间的通信。
 
 而进程之间的通信`IPC (Inter Process Communication)`要复杂一些，包括共享内存`shm (shared memory)`，`mmap`，管道`pipe`，消息队列`MQ (Message Queue)`，信号`signal`，`socket`。
 
@@ -58,8 +58,8 @@
 解决死锁就是针对这四个必要条件的：
 
 1.  所有线程统一顺序加锁，就不会形成闭环。打破了循环等待条件。
-2. 使用`try_lock_for,try_lock_until`。如果无法获得锁，就在某个时间返回，不再等待。破坏了占用等待条件。
-3. 使用`std::lock_guard, std::unique_guard`这些`RAII`机制避免某些锁未释放导致的占用等待。
+2. 使用`try_lock_for,try_lock_until`。如果无法获得锁，就在某个时间返回，不再等待。破坏了占有等待条件。
+3. 使用`std::lock_guard, std::unique_guard`这些`RAII`机制避免某些锁未释放导致的占有等待。
 
 ### 5. 崩溃
 

@@ -85,7 +85,7 @@ CREATE INDEX idx_age ON users(age);
 
 1. 一般的函数或运算会让索引失效，例如`WHERE DATE(date) = '2025-01-01'`，`WHERE sum + 1 = 10`，`WHERE LEFT(name, 3) = 'abc'`, `WHERE age != 30`。但`name LIKE 'abc%'`这种不会，因为它可以被`InnoDB`优化成`name >= 'abc' AND name < 'abd'`， 但 `LIKE %abc`前模糊匹配会让索引失效。
 
-2. 使用联合索引要满足最左前缀法则，从左到右必须连续匹配。例如对于一个联合索引`(a, b, c)`，`WHERE a = 1`会走索引，`WHERE a = 1 AND c = 1`也会走索引，但`WHERE b = 1`就不会走索引。特别的`WHERE c = 1 AND a = 1 AND b = 1`这种等值条件也会走索引，优化器会自动调整位最左前缀。
+2. 使用联合索引要满足最左前缀法则，从左到右必须连续匹配。例如对于一个联合索引`(a, b, c)`，`WHERE a = 1`会走索引，`WHERE a = 1 AND c = 1`也会走索引，但是只用到`a`索引。`WHERE b = 1`也不会走索引。特别的`WHERE c = 1 AND a = 1 AND b = 1`这种等值条件也会走索引，优化器会自动调整位最左前缀。
 
     范围查询会阻断右侧查询，例如`WHERE a > 1 AND b = 3 AND c = 2`，实际索引只使用了`a`的索引。
 
