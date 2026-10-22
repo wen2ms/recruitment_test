@@ -12,7 +12,7 @@
 
 ## 1.2 跨线程连接
 
-如果是同步调用连接使用`Qt::DirectionConnection`，如果是信号发送者线程连接接收者线程，槽函数在接收者线程执行，则使用`Qt::QueuedConnection`。默认的`connect`是`Qt::AutoConnection`，如果两个对象在同一个线程使用`Qt::DirectionConnection`，否则使用`Qt::QueuedConnection`。
+如果是同步调用连接使用`Qt::DirectionConnection`，如果是信号发送者线程连接接收者线程，槽函数在接收者线程执行，则使用`Qt::QueuedConnection`。默认的`connect`是`Qt::AutoConnection`，如果两个对象在同一个线程就使用`Qt::DirectionConnection`，否则使用`Qt::QueuedConnection`。
 
 ```cpp
 QObject::connect(const QObject *sender,
@@ -26,6 +26,6 @@ QObject::connect(const QObject *sender,
 
 ## 1.3 事件驱动
 
-发生在线程中的所有事件都会被放入到这个线程的事件队列中，例如鼠标事件，定时器事件， `QMetaCallEvent`等等。执行事件队列就是通过事件循环`EventLoop`机制的。循环的从事件队列中取事件，分发给相应的`reveiver`，然后调用对象的事件处理函数。
+发生在线程中的所有事件都会被放入到这个线程的事件队列中，例如鼠标事件，定时器事件， `QMetaCallEvent`等等。执行事件队列就是通过事件循环`EventLoop`机制，循环的从事件队列中取事件，分发给相应的`receiver`，然后调用对象的事件处理函数。
 
 一个线程必须通过`exec`创建一个`EventLoop`才能处理事件。
